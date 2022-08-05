@@ -1,6 +1,6 @@
-const multipart = require("aws-lambda-multipart-parser");
 const joi = require('joi');
-const { errorResponse, successResponse } = require('../utils/index');
+const multipart = require('aws-lambda-multipart-parser');
+const { errorResponse, successResponse } = require('../helper/responses.helper');
 
 const userAddValid = joi.object({
   fullName: joi.string().trim(true).required(),
