@@ -1,0 +1,106 @@
+org: apexapatel
+app: dynamolocal
+service: dynamoLocal
+frameworkVersion: '3'
+
+custom:
+  tableName: 'Userdemo'
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+      seed: true
+      noStart: true
+      convertEmptyValues: true
+
+plugins:
+  - serverless-offline
+  - serverless-middleware
+  - serverless-dynamodb-local
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [ UsersTable, Arn ]
+  environment:
+    USERS_TABLE: ${self:custom.tableName}
+
+functions:
+  # api:
+  #   handler: handler.handler
+  #   events:
+  #     - httpApi: '*'
+
+  #USER
+  getUser:
+    handler: src/controller/userController.getUser
+    events:
+      - httpApi:
+          path: /users
+          method: get
+
+  getOneUser:
+    handler: src/controller/userController.getOneUser
+    events:
+      - httpApi:
+          path: /users/{userId}
+          method: get
+
+  addUser:
+    handler: src/controller/userController.addUser
+    # handler: src/middleware/imageUpload.upload
+    events:
+      - httpApi:
+          path: /users/add
+          method: post
+    middleware:
+      pre:
+        - src/controller/userValidator.userAddValidation
+        - src/middleware/imageUpload.upload
+
+  deleteUser:
+    handler: src/controller/userController.deleteUser
+    events:
+      - httpApi:
+          path: /users/remove/{userId}
+          method: delete
+
+  updateUser:
+    handler: src/controller/userController.updateUser
+    events:
+      - httpApi:
+          path: /users/update/{userId}
+          method: put
+    middleware:
+      pre:
+        - src/controller/userValidator.userUpdateValidation
+
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.tableName}
