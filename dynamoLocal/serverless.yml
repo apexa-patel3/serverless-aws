@@ -35,18 +35,25 @@ provider:
             - dynamodb:PutItem
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
+            - s3:*
           Resource:
             - Fn::GetAtt: [ UsersTable, Arn ]
+            - '*'
   environment:
     USERS_TABLE: ${self:custom.tableName}
 
 functions:
-  # api:
-  #   handler: handler.handler
-  #   events:
-  #     - httpApi: '*'
+  addUser:
+    handler: src/controller/userController.addUser 
+    events:
+      - httpApi:
+          path: /users
+          method: post
+    middleware:
+      pre:
+        - src/controller/userValidator.userAddValidation
+        - src/utils/uploadS3.uploadS3
 
-  #USER
   getUser:
     handler: src/controller/userController.getUser
     events:
@@ -60,18 +67,6 @@ functions:
       - httpApi:
           path: /users/{userId}
           method: get
-
-  addUser:
-    handler: src/controller/userController.addUser
-    # handler: src/middleware/imageUpload.upload
-    events:
-      - httpApi:
-          path: /users/add
-          method: post
-    middleware:
-      pre:
-        - src/controller/userValidator.userAddValidation
-        - src/middleware/imageUpload.upload
 
   deleteUser:
     handler: src/controller/userController.deleteUser
@@ -89,7 +84,6 @@ functions:
     middleware:
       pre:
         - src/controller/userValidator.userUpdateValidation
-
 
 resources:
   Resources:

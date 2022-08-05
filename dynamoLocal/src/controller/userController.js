@@ -1,10 +1,35 @@
-/* eslint-disable quotes */
-const { v4: uuid } = require("uuid");
-const multipart = require('aws-lambda-multipart-parser')
-const { AWS } = require('../utils/awsConfiguration');
-const { successResponse, errorResponse } = require('../utils/index');
+// const { v4: uuidv4 } = require('uuid');
+const multipart = require('aws-lambda-multipart-parser');
+const { AWS } = require('../config/aws.local.config');
+const { successResponse, errorResponse } = require('../helper/responses.helper');
 
 const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+
+exports.addUser = async (event, context) => {
+  const eventBody = multipart.parse(event, true);
+  const { fullName, emailID, designation, department, technologiesKnown, projects } = eventBody;
+  console.log(JSON.parse(context.prev.body))
+  const params = {
+    TableName: process.env.USERS_TABLE,
+    Item: {
+      userId: JSON.parse(context.prev.body).userId,
+      profile: JSON.parse(context.prev.body).awsUrl,
+      fullName,
+      emailID,
+      designation,
+      department,
+      technologiesKnown,
+      projects,
+    },
+  };
+  console.log(params)
+  try {
+  await dynamoDbClient.put(params).promise();
+    return successResponse("user added ", 200);
+  } catch (error) {
+    return errorResponse(error.message, 500);
+  }
+};
 
 exports.getUser = async () => {
   const params = {
@@ -38,32 +63,6 @@ exports.getOneUser = async (event) => {
     return errorResponse("found no user", 500);
   } catch (error) {
     return errorResponse(error, 500);
-  }
-};
-
-exports.addUser = async (event, context) => {
-  const eventBody = multipart.parse(event, true);
-  const { fullName, emailID, designation, department, technologiesKnown, projects } = eventBody;
-  console.log(JSON.parse(context.prev.body))
-  const params = {
-    TableName: process.env.USERS_TABLE,
-    Item: {
-      userId: JSON.parse(context.prev.body).uid,
-      profile: JSON.parse(context.prev.body).awsUrl,
-      fullName,
-      emailID,
-      designation,
-      department,
-      technologiesKnown,
-      projects,
-    },
-  };
-  console.log(params)
-  try {
-  await dynamoDbClient.put(params).promise();
-    return successResponse("user added ", 200);
-  } catch (error) {
-    return errorResponse(error.message, 500);
   }
 };
 
