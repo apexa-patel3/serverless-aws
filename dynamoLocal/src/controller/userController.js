@@ -34,10 +34,22 @@ exports.addUser = async (event, context) => {
 exports.getUser = async () => {
   const params = {
     TableName: process.env.USERS_TABLE,
+    // IndexName: "GSIdept",
+    // KeyConditionExpression: "department = :department",
+    // ExpressionAttributeValues: {
+    //   ":department": "nodejs"
+    // }
+    IndexName: "LSIprojects",
+    KeyConditionExpression: "userId = :userId AND projects = :projects",
+    ExpressionAttributeValues: {
+      ":userId" : "40933c70-b97e-4994-837d-957f1a8c9ad0",
+
+      ":projects": "CF"
+    }
   };
   console.log(params)
   try {
-    const { Items } = await dynamoDbClient.scan(params).promise();
+    const { Items } = await dynamoDbClient.query(params).promise();
     if (Items) {
       return successResponse(Items, 200);
     }
