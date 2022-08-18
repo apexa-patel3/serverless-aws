@@ -8,7 +8,6 @@ const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
 exports.addUser = async (event, context) => {
   const eventBody = multipart.parse(event, true);
   const { fullName, emailID, designation, department, technologiesKnown, projects } = eventBody;
-  console.log(JSON.parse(context.prev.body))
   const params = {
     TableName: process.env.USERS_TABLE,
     Item: {
@@ -22,7 +21,6 @@ exports.addUser = async (event, context) => {
       projects,
     },
   };
-  console.log(params)
   try {
   await dynamoDbClient.put(params).promise();
     return successResponse("user added ", 200);
@@ -38,16 +36,14 @@ exports.getUser = async () => {
     // KeyConditionExpression: "department = :department",
     // ExpressionAttributeValues: {
     //   ":department": "nodejs"
+    // }  
+    // IndexName: "LSIprojects",
+    // KeyConditionExpression: "userId = :userId AND projects = :projects",
+    // ExpressionAttributeValues: {
+    //   ":userId" : "40933c70-b97e-4994-837d-957f1a8c9ad0",
+    //   ":projects": "CF"
     // }
-    IndexName: "LSIprojects",
-    KeyConditionExpression: "userId = :userId AND projects = :projects",
-    ExpressionAttributeValues: {
-      ":userId" : "40933c70-b97e-4994-837d-957f1a8c9ad0",
-
-      ":projects": "CF"
-    }
   };
-  console.log(params)
   try {
     const { Items } = await dynamoDbClient.query(params).promise();
     if (Items) {
@@ -55,7 +51,6 @@ exports.getUser = async () => {
     }
     return errorResponse("found no user", 500);
   } catch (error) {
-    console.log(error)
     return errorResponse(error, 500);
   }
 };
